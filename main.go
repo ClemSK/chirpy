@@ -20,16 +20,19 @@ func main() {
 		fileserverHits: 0,
 	}
 
-	// Create a new chi router
-	r := chi.NewRouter()
+	r := chi.NewRouter()         // base router
+	apiRouter := chi.NewRouter() // api router
+	r.Mount("/api", apiRouter)   // using the sub-router
+
 	r.Use(middleware.Logger)
 
 	fsHandler := apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot))))
 	r.Handle("/app", fsHandler) // satisfying the chi router for routes w/out trailing slash
 	r.Handle("/app/*", fsHandler)
-	r.Get("/healthz", handlerReadiness)
-	r.Get("/metrics", apiCfg.handlerMetrics)
-	r.Get("/reset", apiCfg.handleReset)
+
+	apiRouter.Get("/healthz", handlerReadiness)
+	apiRouter.Get("/metrics", apiCfg.handlerMetrics)
+	apiRouter.Get("/reset", apiCfg.handleReset)
 
 	// Wrap the mux in the CORS middleware
 	corsMux := middlewareCors(r)
