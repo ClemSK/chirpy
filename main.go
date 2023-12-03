@@ -20,11 +20,10 @@ func main() {
 		fileserverHits: 0,
 	}
 
+	// Create a new chi router
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
-	// Create a new ServeMux
-	// mux := http.NewServeMux()
 	fsHandler := apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot))))
 	r.Handle("/app", fsHandler) // satisfying the chi router for routes w/out trailing slash
 	r.Handle("/app/*", fsHandler)
