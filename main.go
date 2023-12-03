@@ -10,6 +10,7 @@ func main() {
 
 	// Create a new ServeMux
 	mux := http.NewServeMux()
+	mux.Handle("/", http.FileServer(http.Dir(".")))
 
 	// Wrap the mux in the CORS middleware
 	corsMux := middlewareCors(mux)
