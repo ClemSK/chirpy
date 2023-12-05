@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -12,9 +14,23 @@ type apiConfig struct {
 	fileserverHits int
 }
 
+const dbFilePath = "database.json"
+
 func main() {
 	const port = "8080"
 	const filepathRoot = "."
+
+	// Check if the database file exists
+	if _, err := os.Stat(dbFilePath); os.IsNotExist(err) {
+		// Create an empty JSON object and write it to the file
+		data := make(map[string]interface{})
+		err := writeJsonFile(dbFilePath, data)
+		if err != nil {
+			fmt.Println("Error creating database file:", err)
+			return
+		}
+		fmt.Println("Database file created successfully.")
+	}
 
 	apiCfg := apiConfig{
 		fileserverHits: 0,
