@@ -34,6 +34,7 @@ func main() {
 
 	apiCfg := apiConfig{
 		fileserverHits: 0,
+		DB:             db,
 	}
 
 	r := chi.NewRouter() // base router
@@ -46,7 +47,7 @@ func main() {
 	apiRouter := chi.NewRouter() // api router
 	apiRouter.Get("/healthz", handlerReadiness)
 	apiRouter.Get("/reset", apiCfg.handleReset)
-	apiRouter.Post("/chirps", handleValidateChirp)
+	apiRouter.Post("/chirps", apiCfg.handleValidateChirp)
 	r.Mount("/api", apiRouter) // using the sub-router
 
 	adminRouter := chi.NewRouter()
