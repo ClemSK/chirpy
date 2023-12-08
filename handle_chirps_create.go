@@ -6,7 +6,12 @@ import (
 	"strings"
 )
 
-func (cfg *apiConfig) handleValidateChirp(w http.ResponseWriter, r *http.Request) {
+type Chirp struct {
+	ID   int    `json:"id"`
+	Body string `json:"body"`
+}
+
+func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Body string `json:"body"`
 	}
@@ -35,8 +40,15 @@ func (cfg *apiConfig) handleValidateChirp(w http.ResponseWriter, r *http.Request
 	}
 	cleaned := getCleanedBody(params.Body, badWords)
 
-	respondWithJSON(w, http.StatusOK, returnVals{
-		CleanedBody: cleaned,
+	chirp, err := cfg.DB.CreateChirp(cleaned)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't create chirp")
+		return
+	}
+
+	respondWithJSON(w, http.StatusCreated, Chirp{
+		ID:   chirp.ID,
+		Body: chirp.Body,
 	})
 }
 

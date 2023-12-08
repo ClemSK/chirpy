@@ -6,12 +6,14 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/ClemSK/chirpy/internal/database"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
 type apiConfig struct {
 	fileserverHits int
+	DB             *database.DB
 }
 
 const dbFilePath = "database.json"
@@ -32,6 +34,11 @@ func main() {
 		fmt.Println("Database file created successfully.")
 	}
 
+	db, err := database.NewDB("database.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	apiCfg := apiConfig{
 		fileserverHits: 0,
 		DB:             db,
@@ -47,7 +54,7 @@ func main() {
 	apiRouter := chi.NewRouter() // api router
 	apiRouter.Get("/healthz", handlerReadiness)
 	apiRouter.Get("/reset", apiCfg.handleReset)
-	apiRouter.Post("/chirps", apiCfg.handleValidateChirp)
+	apiRouter.Post("/chirps", apiCfg.handlerChirpsCreate)
 	r.Mount("/api", apiRouter) // using the sub-router
 
 	adminRouter := chi.NewRouter()
