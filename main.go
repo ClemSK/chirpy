@@ -68,8 +68,13 @@ func main() {
 	apiRouter := chi.NewRouter() // api router
 	apiRouter.Get("/healthz", handlerReadiness)
 	apiRouter.Get("/reset", apiCfg.handleReset)
-	apiRouter.Post("/chirps", apiCfg.handlerChirpsCreate)
+
+	apiRouter.Post("/login", apiCfg.handlerLogin)
 	apiRouter.Post("/users", apiCfg.handlerUsersCreate)
+	apiRouter.Get("/users", apiCfg.handlerUserGet)
+	apiRouter.Get("/users/{id}", apiCfg.handlerUserGetById)
+
+	apiRouter.Post("/chirps", apiCfg.handlerChirpsCreate)
 	apiRouter.Get("/chirps", apiCfg.handlerChirpsGet)
 	apiRouter.Get("/chirps/{id}", apiCfg.handlerChirpsGetById)
 	r.Mount("/api", apiRouter) // using the sub-router

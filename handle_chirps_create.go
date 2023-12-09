@@ -23,7 +23,7 @@ func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameter")
+		respondWithError(w, http.StatusInternalServerError, "Could not decode parameter")
 		return
 	}
 
@@ -42,7 +42,7 @@ func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request
 
 	chirp, err := cfg.DB.CreateChirp(cleaned)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't create chirp")
+		respondWithError(w, http.StatusInternalServerError, "Could not create chirp")
 		return
 	}
 
