@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -21,6 +22,19 @@ const dbFilePath = "database.json"
 func main() {
 	const port = "8080"
 	const filepathRoot = "."
+
+	dbg := flag.Bool("debug", false, "Enable debug mode")
+	flag.Parse()
+
+	if *dbg {
+		// If --debug flag is provided, delete the database file
+		err := os.Remove(dbFilePath)
+		if err != nil {
+			fmt.Println("Error deleting database file:", err)
+			return
+		}
+		fmt.Println("Database file deleted (debug mode).")
+	}
 
 	// Check if the database file exists
 	if _, err := os.Stat(dbFilePath); os.IsNotExist(err) {
@@ -55,6 +69,7 @@ func main() {
 	apiRouter.Get("/healthz", handlerReadiness)
 	apiRouter.Get("/reset", apiCfg.handleReset)
 	apiRouter.Post("/chirps", apiCfg.handlerChirpsCreate)
+	apiRouter.Post("/users", apiCfg.handlerUsersCreate)
 	apiRouter.Get("/chirps", apiCfg.handlerChirpsGet)
 	apiRouter.Get("/chirps/{id}", apiCfg.handlerChirpsGetById)
 	r.Mount("/api", apiRouter) // using the sub-router
