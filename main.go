@@ -10,11 +10,13 @@ import (
 	"github.com/ClemSK/chirpy/internal/database"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/joho/godotenv"
 )
 
 type apiConfig struct {
 	fileserverHits int
 	DB             *database.DB
+	jwtSecret      string
 }
 
 const dbFilePath = "database.json"
@@ -23,34 +25,28 @@ func main() {
 	const port = "8080"
 	const filepathRoot = "."
 
-	dbg := flag.Bool("debug", false, "Enable debug mode")
-	flag.Parse()
+	godotenv.Load(".env")
 
-	if *dbg {
-		// If --debug flag is provided, delete the database file
-		err := os.Remove(dbFilePath)
-		if err != nil {
-			fmt.Println("Error deleting database file:", err)
-			return
-		}
-		fmt.Println("Database file deleted (debug mode).")
-	}
-
-	// Check if the database file exists
-	if _, err := os.Stat(dbFilePath); os.IsNotExist(err) {
-		// Create an empty JSON object and write it to the file
-		data := make(map[string]interface{})
-		err := writeJsonFile(dbFilePath, data)
-		if err != nil {
-			fmt.Println("Error creating database file:", err)
-			return
-		}
-		fmt.Println("Database file created successfully.")
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET environment variable not set")
 	}
 
 	db, err := database.NewDB("database.json")
 	if err != nil {
 		log.Fatal(err)
+	}
+	dbg := flag.Bool("debug", false, "Enable debug mode")
+	flag.Parse()
+
+	if dbg != nil && *dbg {
+		// If --debug flag is provided, delete the database file
+		err := db.ResetDB()
+		if err != nil {
+			fmt.Println("Error deleting database file:", err)
+			return
+		}
+		fmt.Println("Database file deleted (debug mode).")
 	}
 
 	apiCfg := apiConfig{
