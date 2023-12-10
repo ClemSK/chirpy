@@ -19,8 +19,6 @@ type apiConfig struct {
 	jwtSecret      string
 }
 
-const dbFilePath = "database.json"
-
 func main() {
 	const port = "8080"
 	const filepathRoot = "."
@@ -52,6 +50,7 @@ func main() {
 	apiCfg := apiConfig{
 		fileserverHits: 0,
 		DB:             db,
+		jwtSecret:      jwtSecret,
 	}
 
 	r := chi.NewRouter() // base router
@@ -66,9 +65,11 @@ func main() {
 	apiRouter.Get("/reset", apiCfg.handleReset)
 
 	apiRouter.Post("/login", apiCfg.handlerLogin)
+
 	apiRouter.Post("/users", apiCfg.handlerUsersCreate)
 	apiRouter.Get("/users", apiCfg.handlerUserGet)
 	apiRouter.Get("/users/{id}", apiCfg.handlerUserGetById)
+	apiRouter.Put("/users", apiCfg.handlerUsersUpdate)
 
 	apiRouter.Post("/chirps", apiCfg.handlerChirpsCreate)
 	apiRouter.Get("/chirps", apiCfg.handlerChirpsGet)

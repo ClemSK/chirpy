@@ -27,14 +27,14 @@ func CheckPasswordHash(password, hash string) error {
 }
 
 // make JWT
-func MakeJTW(userId int, tokenSecret string, expiresIn time.Duration) (string, error) {
+func MakeJWT(userID int, tokenSecret string, expiresIn time.Duration) (string, error) {
 	signingKey := []byte(tokenSecret)
 
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.RegisteredClaims{
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Issuer:    "chirpy",
 		IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 		ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(expiresIn)),
-		Subject:   fmt.Sprintf("%d", userId),
+		Subject:   fmt.Sprintf("%d", userID),
 	})
 	return token.SignedString(signingKey)
 }
@@ -60,11 +60,11 @@ func ValidateJWT(tokenString, tokenSecret string) (string, error) {
 
 // get bearer token
 func GetBearerToken(headers http.Header) (string, error) {
-	authHeader := headers.Get("Authorisation")
+	authHeader := headers.Get("Authorization") // user en-US spelling instead of en-UK
 	if authHeader == "" {
 		return "", ErrNoAuthHeaderIncluded
 	}
-	splitAuth := strings.Split(authHeader, "")
+	splitAuth := strings.Split(authHeader, " ")
 	if len(splitAuth) < 2 || splitAuth[0] != "Bearer" {
 		return "", errors.New("malformed authorisation header")
 	}
