@@ -4,11 +4,21 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+)
+
+type TokenType string
+
+const (
+	// TokenTypeAccess
+	TokenTypeAccess TokenType = "chirpy-access"
+	// TokenTypeRefresh
+	TokenTypeRefresh TokenType = "chirpy-refresh"
 )
 
 // ErrNoAuthHeaderIncluded -
@@ -27,7 +37,12 @@ func CheckPasswordHash(password, hash string) error {
 }
 
 // make JWT
-func MakeJWT(userID int, tokenSecret string, expiresIn time.Duration) (string, error) {
+func MakeJWT(
+	userID int,
+	tokenSecret string,
+	expiresIn time.Duration,
+	tokenType TokenType,
+) (string, error) {
 	signingKey := []byte(tokenSecret)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
@@ -55,7 +70,53 @@ func ValidateJWT(tokenString, tokenSecret string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	issuer, err := token.Claims.GetIssuer()
+	if err != nil {
+		return "", err
+	}
+	if issuer != string(TokenTypeAccess) {
+		return "", errors.New("invalid issuer")
+	}
 	return userIDString, nil
+}
+
+// refresh token
+func RefreshToken(tokenString, tokenSecret string) (string, error) {
+	clamStruct := jwt.RegisteredClaims{}
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		&clamStruct,
+		func(token *jwt.Token) (interface{}, error) { return []byte(tokenSecret), nil },
+	)
+	if err != nil {
+		return "", err
+	}
+	userIDString, err := token.Claims.GetSubject()
+	if err != nil {
+		return "", nil
+	}
+	issuer, err := token.Claims.GetIssuer()
+	if err != nil {
+		return "", nil
+	}
+	if issuer != string(TokenTypeRefresh) {
+		return "", errors.New("invalid issuer")
+	}
+	userId, err := strconv.Atoi(userIDString)
+	if err != nil {
+		return "", err
+	}
+	newToken, err := MakeJWT(
+		userId,
+		tokenSecret,
+		time.Hour,
+		TokenTypeAccess,
+	)
+	if err != nil {
+		return "", err
+	}
+	return newToken, nil
 }
 
 // get bearer token
