@@ -21,3 +21,4 @@
 go.work
 database.json
 tasks.md
+*.env

@@ -10,25 +10,36 @@ import (
 	"github.com/ClemSK/chirpy/internal/database"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/joho/godotenv"
 )
 
 type apiConfig struct {
 	fileserverHits int
 	DB             *database.DB
+	jwtSecret      string
 }
-
-const dbFilePath = "database.json"
 
 func main() {
 	const port = "8080"
 	const filepathRoot = "."
 
+	godotenv.Load(".env")
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET environment variable not set")
+	}
+
+	db, err := database.NewDB("database.json")
+	if err != nil {
+		log.Fatal(err)
+	}
 	dbg := flag.Bool("debug", false, "Enable debug mode")
 	flag.Parse()
 
-	if *dbg {
+	if dbg != nil && *dbg {
 		// If --debug flag is provided, delete the database file
-		err := os.Remove(dbFilePath)
+		err := db.ResetDB()
 		if err != nil {
 			fmt.Println("Error deleting database file:", err)
 			return
@@ -36,26 +47,10 @@ func main() {
 		fmt.Println("Database file deleted (debug mode).")
 	}
 
-	// Check if the database file exists
-	if _, err := os.Stat(dbFilePath); os.IsNotExist(err) {
-		// Create an empty JSON object and write it to the file
-		data := make(map[string]interface{})
-		err := writeJsonFile(dbFilePath, data)
-		if err != nil {
-			fmt.Println("Error creating database file:", err)
-			return
-		}
-		fmt.Println("Database file created successfully.")
-	}
-
-	db, err := database.NewDB("database.json")
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	apiCfg := apiConfig{
 		fileserverHits: 0,
 		DB:             db,
+		jwtSecret:      jwtSecret,
 	}
 
 	r := chi.NewRouter() // base router
@@ -68,8 +63,17 @@ func main() {
 	apiRouter := chi.NewRouter() // api router
 	apiRouter.Get("/healthz", handlerReadiness)
 	apiRouter.Get("/reset", apiCfg.handleReset)
-	apiRouter.Post("/chirps", apiCfg.handlerChirpsCreate)
+
+	apiRouter.Post("/refresh", apiCfg.handlerRefresh)
+	apiRouter.Post("/revoke", apiCfg.handlerRevoke)
+	apiRouter.Post("/login", apiCfg.handlerLogin)
+
 	apiRouter.Post("/users", apiCfg.handlerUsersCreate)
+	apiRouter.Get("/users", apiCfg.handlerUserGet)
+	apiRouter.Get("/users/{id}", apiCfg.handlerUserGetById)
+	apiRouter.Put("/users", apiCfg.handlerUsersUpdate)
+
+	apiRouter.Post("/chirps", apiCfg.handlerChirpsCreate)
 	apiRouter.Get("/chirps", apiCfg.handlerChirpsGet)
 	apiRouter.Get("/chirps/{id}", apiCfg.handlerChirpsGetById)
 	r.Mount("/api", apiRouter) // using the sub-router
