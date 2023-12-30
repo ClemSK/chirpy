@@ -45,7 +45,7 @@ func (cfg *apiConfig) handlerUserGetById(w http.ResponseWriter, r *http.Request)
 	}
 
 	respondWithJSON(w, http.StatusOK, User{
-		ID:    user.ID,
 		Email: user.Email,
+		ID:    user.ID,
 	})
 }

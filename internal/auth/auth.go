@@ -46,12 +46,55 @@ func MakeJWT(
 	signingKey := []byte(tokenSecret)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		Issuer:    "chirpy",
+		Issuer:    string(tokenType),
 		IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 		ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(expiresIn)),
 		Subject:   fmt.Sprintf("%d", userID),
 	})
 	return token.SignedString(signingKey)
+}
+
+// refresh token
+func RefreshToken(tokenString, tokenSecret string) (string, error) {
+	claimsStruct := jwt.RegisteredClaims{}
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		&claimsStruct,
+		func(token *jwt.Token) (interface{}, error) { return []byte(tokenSecret), nil },
+	)
+	if err != nil {
+		return "", err
+	}
+
+	userIDString, err := token.Claims.GetSubject()
+	if err != nil {
+		return "", err
+	}
+
+	issuer, err := token.Claims.GetIssuer()
+	if err != nil {
+		return "", err
+	}
+
+	if issuer != string(TokenTypeRefresh) {
+		return "", errors.New("invalid issuer")
+	}
+
+	userID, err := strconv.Atoi(userIDString)
+	if err != nil {
+		return "", err
+	}
+
+	newToken, err := MakeJWT(
+		userID,
+		tokenSecret,
+		time.Hour,
+		TokenTypeAccess,
+	)
+	if err != nil {
+		return "", err
+	}
+	return newToken, nil
 }
 
 // Validate JWT
@@ -81,44 +124,6 @@ func ValidateJWT(tokenString, tokenSecret string) (string, error) {
 	return userIDString, nil
 }
 
-// refresh token
-func RefreshToken(tokenString, tokenSecret string) (string, error) {
-	clamStruct := jwt.RegisteredClaims{}
-	token, err := jwt.ParseWithClaims(
-		tokenString,
-		&clamStruct,
-		func(token *jwt.Token) (interface{}, error) { return []byte(tokenSecret), nil },
-	)
-	if err != nil {
-		return "", err
-	}
-	userIDString, err := token.Claims.GetSubject()
-	if err != nil {
-		return "", nil
-	}
-	issuer, err := token.Claims.GetIssuer()
-	if err != nil {
-		return "", nil
-	}
-	if issuer != string(TokenTypeRefresh) {
-		return "", errors.New("invalid issuer")
-	}
-	userId, err := strconv.Atoi(userIDString)
-	if err != nil {
-		return "", err
-	}
-	newToken, err := MakeJWT(
-		userId,
-		tokenSecret,
-		time.Hour,
-		TokenTypeAccess,
-	)
-	if err != nil {
-		return "", err
-	}
-	return newToken, nil
-}
-
 // get bearer token
 func GetBearerToken(headers http.Header) (string, error) {
 	authHeader := headers.Get("Authorization") // user en-US spelling instead of en-UK
@@ -127,7 +132,7 @@ func GetBearerToken(headers http.Header) (string, error) {
 	}
 	splitAuth := strings.Split(authHeader, " ")
 	if len(splitAuth) < 2 || splitAuth[0] != "Bearer" {
-		return "", errors.New("malformed authorisation header")
+		return "", errors.New("malformed authorization header")
 	}
 	return splitAuth[1], nil
 }

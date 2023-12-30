@@ -60,7 +60,7 @@ func (db *DB) GetUser(id int) (User, error) {
 	}
 	user, found := dbStructure.Users[id]
 	if !found {
-		return User{}, errors.New("chirp not found")
+		return User{}, ErrNotExist
 	}
 	return user, nil
 }

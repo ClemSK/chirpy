@@ -64,6 +64,8 @@ func main() {
 	apiRouter.Get("/healthz", handlerReadiness)
 	apiRouter.Get("/reset", apiCfg.handleReset)
 
+	apiRouter.Post("/refresh", apiCfg.handlerRefresh)
+	apiRouter.Post("/revoke", apiCfg.handlerRevoke)
 	apiRouter.Post("/login", apiCfg.handlerLogin)
 
 	apiRouter.Post("/users", apiCfg.handlerUsersCreate)
