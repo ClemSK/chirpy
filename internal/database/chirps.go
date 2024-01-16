@@ -3,9 +3,9 @@ package database
 import "errors"
 
 type Chirp struct {
-	ID       int    `json:"id"`
 	AuthorID int    `json:"author_id"`
 	Body     string `json:"body"`
+	ID       int    `json:"id"`
 }
 
 // CreateChirp creates a new chirp and saves it to disk
@@ -21,9 +21,9 @@ func (db *DB) CreateChirp(body string, authorID int) (Chirp, error) {
 
 	id := len(dbStructure.Chirps) + 1
 	chirp := Chirp{
-		ID:       id,
 		AuthorID: authorID,
 		Body:     body,
+		ID:       id,
 	}
 	dbStructure.Chirps[id] = chirp
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,7 +12,7 @@ import (
 
 type Chirp struct {
 	ID       int    `json:"id"`
-	AuthorID int    `json:"auth_id"`
+	AuthorID int    `json:"author_id"`
 	Body     string `json:"body"`
 }
 
@@ -25,11 +26,13 @@ func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request
 		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT")
 		return
 	}
+
 	subject, err := auth.ValidateJWT(token, cfg.jwtSecret)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't validate JWT")
 		return
 	}
+
 	userID, err := strconv.Atoi(subject)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Couldn't parse user ID")
@@ -44,18 +47,11 @@ func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	maxChirpLength := 150
-	if len(params.Body) > maxChirpLength {
-		respondWithError(w, http.StatusBadRequest, "Chirp is too long")
+	cleaned, err := validateChirp(params.Body)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-
-	badWords := map[string]struct{}{
-		"kerfuffle": {},
-		"sharbert":  {},
-		"fornax":    {},
-	}
-	cleaned := getCleanedBody(params.Body, badWords)
 
 	chirp, err := cfg.DB.CreateChirp(cleaned, userID)
 	if err != nil {
@@ -64,10 +60,26 @@ func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request
 	}
 
 	respondWithJSON(w, http.StatusCreated, Chirp{
-		ID:       chirp.ID,
 		AuthorID: chirp.AuthorID,
 		Body:     chirp.Body,
+		ID:       chirp.ID,
 	})
+}
+
+func validateChirp(body string) (string, error) {
+	const maxChirpLength = 150
+	if len(body) > maxChirpLength {
+		return "", errors.New("Chirp is too long")
+	}
+
+	badWords := map[string]struct{}{
+		"kerfuffle": {},
+		"sharbert":  {},
+		"fornax":    {},
+	}
+
+	cleaned := getCleanedBody(body, badWords)
+	return cleaned, nil
 }
 
 func getCleanedBody(body string, badWords map[string]struct{}) string {
