@@ -31,10 +31,6 @@ func (cfg *apiConfig) handlerChirpsGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *apiConfig) handlerChirpsGetById(w http.ResponseWriter, r *http.Request) {
-	// dbChirps, err := cfg.DB.GetChirps()
-	// if err != nil {
-	// 	respondWithError(w, http.StatusInternalServerError, "Could not retrieve chirps")
-	// }
 	chirpIdStr := chi.URLParam(r, "id")
 
 	chirpId, err := strconv.Atoi(chirpIdStr)
@@ -49,7 +45,6 @@ func (cfg *apiConfig) handlerChirpsGetById(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// respondWithJSON(w, http.StatusOK, chirp)
 	respondWithJSON(w, http.StatusOK, Chirp{
 		ID:       chirp.ID,
 		AuthorID: chirp.AuthorID,
