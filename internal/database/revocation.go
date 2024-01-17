@@ -12,10 +12,12 @@ func (db *DB) RevokeToken(token string) error {
 	if err != nil {
 		return err
 	}
+
 	revocation := Revocation{
 		Token:     token,
 		RevokedAt: time.Now().UTC(),
 	}
+
 	dbStructure.Revocations[token] = revocation
 	err = db.writeDB(dbStructure)
 	if err != nil {
