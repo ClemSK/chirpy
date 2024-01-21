@@ -14,8 +14,14 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# What I'm working on
+task.md
+
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
 # Go workspace file
 go.work
+database.json
+tasks.md
+*.env

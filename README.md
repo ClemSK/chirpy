@@ -1,2 +1,3 @@
-# chirpy
-web server
+# Chirpy
+
+Web server, Twitter/X clone
