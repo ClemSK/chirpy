@@ -12,6 +12,7 @@ func (cfg *apiConfig) handlerUserGet(w http.ResponseWriter, r *http.Request) {
 	dbUsers, err := cfg.DB.GetUsers()
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Could not retrieve users")
+		return
 	}
 
 	users := []User{}

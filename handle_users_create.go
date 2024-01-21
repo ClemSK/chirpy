@@ -10,9 +10,10 @@ import (
 )
 
 type User struct {
-	Email    string `json:"email"`
-	ID       int    `json:"id"`
-	Password string `json:"-"`
+	Email       string `json:"email"`
+	ID          int    `json:"id"`
+	Password    string `json:"-"`
+	IsChirpyRed bool   `json:"is_chirpy_red"`
 }
 
 func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request) {
@@ -42,6 +43,7 @@ func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		if errors.Is(err, database.ErrAlreadyExists) {
 			respondWithError(w, http.StatusConflict, "User already exists")
+			return
 		}
 		respondWithError(w, http.StatusInternalServerError, "Could not create user")
 		return
